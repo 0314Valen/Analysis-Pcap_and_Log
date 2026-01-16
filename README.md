@@ -43,7 +43,10 @@
    - 生成域名分布柱状图
    - 生成HTML报告
 
-3. **示例调用脚本** (`main.py`)
+3. **MCP服务器脚本** (`Server.py`)
+   - 调用支持MCP，但是取的数据有点多，对token是一种浪费
+
+4. **示例调用脚本** (`main.py`)
    - 提供完整的调用用例
    - 包含5个详细的示例，覆盖PCAP分析和攻击检测
    - 提供测试JSON演示功能
@@ -60,7 +63,7 @@
 ├── Pcap/                   # 流量包分析工具
 │   ├── main.py             # 示例调用脚本
 │   ├── Pcap_analysis.py    # PCAP文件分析核心脚本
-│   ├── Server.py           # 服务器辅助脚本
+│   ├── Server.py           # MCP服务器辅助脚本
 │   ├── visualize_attack_data.py  # 攻击数据可视化脚本
 │   └── rules/              # 攻击检测规则
 ├── Analysis_Apache/        # [生成]Apache日志分析结果
