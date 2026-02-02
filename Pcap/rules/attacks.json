@@ -1,0 +1,125 @@
+{
+  "rules": [
+    {
+      "id": "SQL-001",
+      "attack_type": "Injection",
+      "level": "WARN",
+      "pattern_target": ["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)(\\bunion\\b\\s+\\bselect\\b)",
+        "(?i)(\\bor\\b|\\band\\b)\\s+\\d+\\s*=\\s*\\d+",
+        "(?i)\\border\\s+by\\s+\\d+",
+        "(?i)information_schema|sleep\\s*\\(\\s*\\d+\\s*\\)",
+        "(?i)(%27|'|%22|\")\\s*(?:or|and)\\s*(?:--|#|/\\*|\\s)*\\b(?:'[^']+'|\\\"[^\\\"]+\\\"|\\w+)\\s*=\\s*(?:'[^']+'|\\\"[^\\\"]+\\\"|\\w+)",
+        "(?i)\\bunion\\s+(?:all\\s+)?select\\b.*(?:--|#|/\\*|$)",
+        "(?i)\\b(sleep|benchmark|pg_sleep|waitfor\\s+delay)\\s*\\(",
+        "(?i)(?:select.*(?:from.*(?:(?:information_schema|pg_catalog|sys\\.)|having|group by))|xp_cmdshell|order by\\s+\\d+)"
+      ],
+      "description": "Common SQLi indicators including UNION SELECT, boolean logic, ORDER BY integers, time-based patterns."
+    },
+    {
+      "id": "JNDI-001",
+      "attack_type": "Injection",
+      "level": "FATAL",
+      "pattern_target":["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)\\$\\{[^}]{0,200}j\\s*\\}?\\s*n\\s*\\}?\\s*di\\s*:\\s*(?:ldap|ldaps|rmi|dns)://",
+        "(?i)\\$\\{\\s*\\$\\{lower:j\\}\\s*\\$\\{upper:n\\}\\s*di\\s*:\\s*(?:ldap|ldaps|rmi|dns)://",
+        "(\\\\$\\\\{[^}]{0,200}j\\\\s*\\\\}?\\\\s*n\\\\s*\\\\}?\\\\s*di\\\\s*:\\\\s*(?:ldap|ldaps|rmi|dns)://)",
+        "(\\\\$\\\\{\\\\s*\\\\$\\\\{lower:j\\\\}\\\\s*\\\\$\\\\{upper:n\\\\}\\\\s*di\\\\s*:\\\\s*(?:ldap|ldaps|rmi|dns)://)",
+        "(?i)\\$\\{(?:jndi|j.{1,15}n.{1,15}d.{1,15}i):(?:ldap|ldaps|rmi|dns|corba|iiop|nis|nds)://"
+
+      ],
+      "description": "Detects ${...jndi:...} expressions, including lower:/upper: obfuscation and ldap/ldaps/rmi/dns resolvers."
+    },
+    {
+      "id": "RCE-001",
+      "attack_type": "Injection",
+      "level": "FATAL",
+      "pattern_target":["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)(;|\\|\\||&&)\\s*(wget|curl|sh|bash|nc|netcat|powershell|python|perl)\\b",
+        "(?i)\\b`[^`]{1,200}`\\b",
+        "(?i)call_user_func_array",
+        "(?i)\\b(shell_exec|system|passthru|exec|popen|proc_open)\\b",
+        "(?i)\\b(shell_exec|exec|system|passthru|popen|proc_open|pcntl_exec|asset|eval|create_function|call_user_func|call_user_func_array)\\s*\\(",
+        "(?i)\\b(Tsunami|kinsing|pnscan|masscan|zmap)\\b",
+        "(?i)[;`|&]\\s*(/bin/|/usr/bin/)?(bash|sh|zsh|python|perl|ruby|php|node|gcc|make|g\\+\\+|wget|curl|nc|netcat|ncat|nmap|ping|uname|whoami|id|cat|ls|pwd|ifconfig|ip|rm|mv|cp|mkdir)\\b",
+        "(?i)(base64_decode|gzinflate|gzuncompress|str_rot13)\\s*\\(.{20,}\\)",
+        "(?i)[&|]\\s*(cmd|powershell|pwsh|net|netsh|ipconfig|whoami|tasklist|taskkill|dir|type|ping|del|copy|mkdir|schtasks|runas|reg)\\.exe\\b"
+      ],
+      "description": "Shell metacharacters followed by risky executables or backticks indicating command injection."
+    },
+    {
+      "id": "Path-001",
+      "attack_type": "Path—Traversal",
+      "level": "WARN",
+      "pattern_target": ["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)(?:\\.{2}/){1,}",
+        "(?:\\.\\./|\\.\\.\\\\|%2e%2e(?:%2f|%5c)){2,}"
+      ],
+      "description": "Repeated '../' sequences indicating potential directory traversal."
+    },
+    {
+      "id": "XSS-001",
+      "attack_type": "Cross-Site Scripting (XSS)",
+      "level": "FATAL|ERROR|WARN|INFO",
+      "pattern_target":  ["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)<\\s*script\\b",
+        "(?i)onerror\\s*=\\s*",
+        "(?i)javascript\\s*:",
+        "(?i)<script.*?>.*?</script>",
+        "(?i)\\b(onerror|onload|onmouseover|onclick|onfocus|onmouseenter|onmouseleave)\\s*=",
+        "(?i)javascript:"
+      ],
+      "description": "Basic reflected XSS signs like <script>, event handlers, javascript: URLs."
+    },
+    {
+      "id": "SSRF",
+      "attack_type": "Server-Side Request Forgery (SSRF)",
+      "level": "WARN",
+      "pattern_target":  ["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)\\b(?:https?|ftp|gopher|file)://[^\\s'\\\"]+",
+        "(?i)(localhost|127\\.0\\.0\\.1|10\\.|172\\.(1[6-9]|2\\d|3[0-1])\\.|192\\.168\\.|169\\.254\\.)",
+        "(?i)(169\\.254\\.169\\.254|metadata\\.google\\.internal|instance-data)"
+      ],
+      "description": "External fetch with typical SSRF-relevant schemes."
+    },
+    {
+      "id": "SystemFile-001",
+      "attack_type": "Sensitive File Exposure",
+      "level": "FATAL|ERROR|WARN|INFO",
+      "pattern_target":  ["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)/etc/(?:passwd|shadow|group)|/proc/self/environ|/(?:windows|winnt)/win\\.ini",
+        "(?i)/(?:\\.git|\\.svn|\\.env|web\\.config|wp-config\\.php|composer\\.json|package\\.json|Dockerfile)"
+      ],
+      "description": "Detects attempts to access common sensitive operating system files."
+    },
+    {
+      "id": "SCAN-001",
+      "attack_type": "Malicious User-Agent and Scanning",
+      "level": "INFO",
+      "pattern_target":  ["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)(sqlmap|nmap|nikto|wpscan|dirb|gobuster|acunetix|nessus|zgrab|whatweb|feroxbuster|ffuf)",
+        "(?i)(python-requests|curl|wget|libwww-perl|go-http-client|java/\\d)",
+        "(?i)/(?:wp-admin|administrator|admin\\.php|phpmyadmin|cpanel|server-status|phpinfo\\.php|_profiler|actuator/|\\.env)"
+      ],
+      "description": "Detects requests for common administrative or sensitive paths."
+    },
+        {
+      "id": "RESPONSES-001",
+      "attack_type": "Read info",
+      "level": "INFO",
+      "pattern_target":  ["request_full_uri","request_data","request_line"],
+      "pattern_rule": [
+        "(?i)(flag|666c|Zmx|synt|7=28|01100110011011000110000101100111|10210897103|MZWG|U.C5EC)"
+      ],
+      "description": "Detects requests for common administrative or sensitive paths."
+    }
+  ]
+}
